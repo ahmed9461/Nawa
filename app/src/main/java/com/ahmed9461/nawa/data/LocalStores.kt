@@ -24,8 +24,10 @@ class ModelStore(private val context: Context) {
     suspend fun import(uri: Uri): LocalModel = withContext(Dispatchers.IO) {
         val resolver = context.contentResolver
         val displayName = queryDisplayName(resolver, uri)
-            ?.takeIf { it.endsWith(".gguf", ignoreCase = true) }
-            ?: "model-${System.currentTimeMillis()}.gguf"
+            ?: throw IllegalArgumentException("تعذر قراءة اسم الملف المحدد.")
+        require(displayName.endsWith(".gguf", ignoreCase = true)) {
+            "اختر ملف موديل بصيغة .gguf"
+        }
 
         val safe = displayName.replace(Regex("[^A-Za-z0-9._ -]"), "_")
         var target = File(root, safe)
