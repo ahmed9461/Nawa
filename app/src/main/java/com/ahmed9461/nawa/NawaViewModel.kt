@@ -127,9 +127,16 @@ class NawaViewModel(application: Application) : AndroidViewModel(application) {
 
     fun loadModel(model: LocalModel) {
         if (_uiState.value.loadingModelPath != null) return
+
+        generationJob?.cancel()
+        generationJob = null
+        activeThreadId = null
+
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(
+                loadedModel = null,
                 loadingModelPath = model.path,
+                generatingThreadId = null,
                 error = null,
             )
             val settings = _uiState.value.settings

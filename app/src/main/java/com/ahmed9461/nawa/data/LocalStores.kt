@@ -12,7 +12,12 @@ import java.io.File
 import java.util.UUID
 
 class ModelStore(private val context: Context) {
-    private val root = File(context.filesDir, "models").apply { mkdirs() }
+    private val root = File(context.filesDir, "models").apply {
+        mkdirs()
+        listFiles()
+            ?.filter { it.isFile && it.name.endsWith(".part") }
+            ?.forEach { it.delete() }
+    }
 
     fun list(): List<LocalModel> =
         root.listFiles()
@@ -37,16 +42,21 @@ class ModelStore(private val context: Context) {
         }
 
         val temp = File(root, ".${target.name}.part")
-        resolver.openInputStream(uri).use { input ->
-            requireNotNull(input) { "Could not open selected file." }
-            temp.outputStream().buffered(1024 * 1024).use { output ->
-                input.copyTo(output, 1024 * 1024)
+        try {
+            resolver.openInputStream(uri).use { input ->
+                requireNotNull(input) { "تعذر فتح ملف الموديل المحدد." }
+                temp.outputStream().buffered(1024 * 1024).use { output ->
+                    input.copyTo(output, 1024 * 1024)
+                }
             }
-        }
 
-        check(temp.length() > 0) { "Selected model is empty." }
-        check(temp.renameTo(target)) { "Could not finish model import." }
-        LocalModel(target.name, target.absolutePath, target.length())
+            check(temp.length() > 0) { "ملف الموديل المحدد فارغ." }
+            check(temp.renameTo(target)) { "تعذر إكمال استيراد الموديل." }
+            LocalModel(target.name, target.absolutePath, target.length())
+        } catch (t: Throwable) {
+            temp.delete()
+            throw t
+        }
     }
 
     fun delete(model: LocalModel): Boolean = File(model.path).delete()

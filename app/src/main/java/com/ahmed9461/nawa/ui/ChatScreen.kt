@@ -103,9 +103,18 @@ internal fun ChatScreen(
             )
         },
         bottomBar = {
+            val generatingHere = state.generatingThreadId == thread.id
+            val anotherChatIsGenerating =
+                state.generatingThreadId != null && !generatingHere
+
             ChatComposer(
-                generating = state.generatingThreadId == thread.id,
-                enabled = state.loadedModel != null,
+                generating = generatingHere,
+                enabled = state.loadedModel != null && !anotherChatIsGenerating,
+                unavailableText = if (state.loadedModel == null) {
+                    "حمّل موديل أولًا"
+                } else {
+                    "انتظر انتهاء الرد الحالي"
+                },
                 onSend = onSend,
                 onStop = onStop,
             )
@@ -161,6 +170,7 @@ internal fun ChatScreen(
 private fun ChatComposer(
     generating: Boolean,
     enabled: Boolean,
+    unavailableText: String,
     onSend: (String) -> Unit,
     onStop: () -> Unit,
 ) {
@@ -191,7 +201,7 @@ private fun ChatComposer(
                         if (enabled) {
                             "اكتب رسالة إلى Nawa…"
                         } else {
-                            "حمّل موديل أولًا"
+                            unavailableText
                         }
                     )
                 },

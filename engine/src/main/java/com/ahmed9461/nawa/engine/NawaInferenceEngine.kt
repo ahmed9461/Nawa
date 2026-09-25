@@ -93,20 +93,28 @@ class NawaInferenceEngine private constructor(context: Context) {
             check(nativeProcessUserPrompt(userPrompt, maxTokens.coerceIn(1, 4096)) == 0) {
                 "Prompt does not fit in the current context."
             }
+            val reservedTokenPattern =
+                Regex("""<unused\d+>|<bos>|<eos>|\[multimodal]""")
             var reservedStreak = 0
+
             while (true) {
                 currentCoroutineContext().ensureActive()
                 val token = nativeGenerateNextToken() ?: break
                 if (token.isEmpty()) continue
-                reservedStreak = if (token.startsWith("<unused") || token == "[multimodal]") {
-                    reservedStreak + 1
-                } else {
-                    0
+
+                if (reservedTokenPattern.containsMatchIn(token)) {
+                    reservedStreak++
+                    if (reservedStreak >= 4) {
+                        error(
+                            "The model is producing reserved tokens instead of text. " +
+                                "Its embedded chat template may be incompatible."
+                        )
+                    }
+                    continue
                 }
+
+                reservedStreak = 0
                 emit(token)
-                if (reservedStreak >= 8) {
-                    error("The model is producing reserved tokens; its chat template is incompatible with this model build.")
-                }
             }
             _state.value = State.ModelReady(path)
         } catch (cancelled: CancellationException) {

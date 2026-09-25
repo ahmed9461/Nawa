@@ -5,6 +5,7 @@ set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 if(NOT ANDROID_ABI STREQUAL "arm64-v8a")
     message(FATAL_ERROR "Nawa MVP supports arm64-v8a only.")
@@ -33,4 +34,11 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
     ${LLAMA_SRC}/ggml/src
 )
 
-target_link_libraries(${CMAKE_PROJECT_NAME} llama llama-common android log)
+target_link_libraries(${CMAKE_PROJECT_NAME} llama-common android log)
+
+# Nawa ships one JNI library. Strip static llama.cpp symbols/debug data from
+# the final shared object instead of packaging the whole dependency graph.
+target_link_options(${CMAKE_PROJECT_NAME} PRIVATE
+    "-Wl,--gc-sections"
+    "-Wl,--strip-all"
+)

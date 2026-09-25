@@ -15,12 +15,13 @@ android {
             cmake {
                 arguments += listOf(
                     "-DCMAKE_BUILD_TYPE=Release",
-                    "-DBUILD_SHARED_LIBS=ON",
+                    "-DCMAKE_POSITION_INDEPENDENT_CODE=ON",
+                    "-DBUILD_SHARED_LIBS=OFF",
                     "-DLLAMA_BUILD_APP=OFF",
                     "-DLLAMA_BUILD_COMMON=ON",
                     "-DLLAMA_OPENSSL=OFF",
                     "-DGGML_NATIVE=OFF",
-                    "-DGGML_BACKEND_DL=ON",
+                    "-DGGML_BACKEND_DL=OFF",
                     "-DGGML_LLAMAFILE=OFF"
                 )
             }

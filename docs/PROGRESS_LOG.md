@@ -21,3 +21,10 @@
 
 - Disabled Android cloud backup to keep Nawa's chats/settings strictly local-first.
 - Added a tiny vector adaptive Nawa launcher icon instead of shipping raster icon assets.
+
+- Inspected the optimized APK directly: it was still about 134 MB because several llama.cpp shared libraries retained debug sections.
+- Switched the native engine to static llama.cpp linkage with one stripped JNI library and linker garbage collection.
+- Hardened model switching so a failed replacement load cannot leave the UI claiming the old model is still loaded.
+- Added cleanup for interrupted `.part` model imports and clearer Arabic import errors.
+- Reserved Gemma-style special-token loops are now withheld from the visible answer and converted into an explicit compatibility error after a short streak.
+- Prevented sending into a second chat while another chat is generating.

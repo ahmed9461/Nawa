@@ -36,3 +36,7 @@ Reason: the first successful debug artifact was larger than desired. Nawa does n
 ## D-009 — Optimized test APKs are temporarily debug-signed
 Status: accepted
 Reason: the personal MVP needs an installable, stripped, minified APK for device testing without committing any private signing key. CI therefore builds the release variant but signs it with the standard Android debug signing configuration. Proper personal release signing remains a later distribution step.
+
+## D-010 — Statically link llama.cpp into one stripped JNI library
+Status: accepted
+Reason: even the optimized APK still packaged multiple large llama.cpp shared libraries carrying debug information. Nawa now statically links its required llama.cpp/common/ggml code into `libnawa-engine.so`, keeps only the arm64 CPU path, and strips the final JNI library. This should materially reduce installed/download size without removing local inference features.

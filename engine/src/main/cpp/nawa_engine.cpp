@@ -99,12 +99,10 @@ static int decode_text(const std::string & text, bool logits_last) {
 
 extern "C" JNIEXPORT void JNICALL
 Java_com_ahmed9461_nawa_engine_NawaInferenceEngine_nativeInit(
-    JNIEnv * env, jobject, jstring native_lib_dir
+    JNIEnv *, jobject, jstring
 ) {
     llama_log_set(nawa_llama_log_callback, nullptr);
-    const char * path = env->GetStringUTFChars(native_lib_dir, nullptr);
-    ggml_backend_load_all_from_path(path);
-    env->ReleaseStringUTFChars(native_lib_dir, path);
+    // CPU is statically linked into libnawa-engine.so.
     llama_backend_init();
 }
 
