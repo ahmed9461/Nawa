@@ -10,15 +10,10 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.weight
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -163,15 +158,15 @@ private fun CodeBlock(raw: String) {
                         .fillMaxWidth()
                         .padding(start = 12.dp, end = 4.dp, top = 4.dp),
                     verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween,
                 ) {
                     Text(
                         text = language?.uppercase() ?: "CODE",
-                        modifier = Modifier.weight(1f),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
-                    IconButton(onClick = { copyText(context, code) }) {
-                        Icon(Icons.Default.ContentCopy, contentDescription = "نسخ")
+                    TextButton(onClick = { copyText(context, code) }) {
+                        Text("نسخ")
                     }
                 }
 

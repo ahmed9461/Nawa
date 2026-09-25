@@ -11,16 +11,14 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.weight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.FolderOpen
 import androidx.compose.material.icons.filled.Send
-import androidx.compose.material.icons.filled.Stop
+import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.Icon
@@ -30,6 +28,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -97,11 +96,8 @@ internal fun ChatScreen(
                     }
                 },
                 actions = {
-                    IconButton(onClick = onModels) {
-                        Icon(
-                            Icons.Default.FolderOpen,
-                            contentDescription = "الموديلات",
-                        )
+                    TextButton(onClick = onModels) {
+                        Text("الموديلات")
                     }
                 },
             )
@@ -178,21 +174,17 @@ private fun ChatComposer(
             .padding(10.dp),
         shape = RoundedCornerShape(25.dp),
     ) {
-        Row(
+        Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(
-                    start = 10.dp,
-                    end = 6.dp,
-                    top = 5.dp,
-                    bottom = 5.dp,
-                ),
-            verticalAlignment = Alignment.Bottom,
+                .padding(5.dp),
         ) {
             OutlinedTextField(
                 value = text,
                 onValueChange = { text = it },
-                modifier = Modifier.weight(1f),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(end = 56.dp),
                 enabled = enabled && !generating,
                 placeholder = {
                     Text(
@@ -208,8 +200,6 @@ private fun ChatComposer(
                 shape = RoundedCornerShape(20.dp),
             )
 
-            Spacer(Modifier.width(6.dp))
-
             FilledIconButton(
                 onClick = {
                     if (generating) {
@@ -220,10 +210,11 @@ private fun ChatComposer(
                     }
                 },
                 enabled = generating || (enabled && text.isNotBlank()),
+                modifier = Modifier.align(Alignment.BottomEnd),
             ) {
                 Icon(
                     imageVector = if (generating) {
-                        Icons.Default.Stop
+                        Icons.Default.Clear
                     } else {
                         Icons.Default.Send
                     },

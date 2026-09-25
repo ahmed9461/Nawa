@@ -20,9 +20,9 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.FolderOpen
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material.icons.filled.Stop
+import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
@@ -99,7 +99,7 @@ internal fun ModelsScreen(
                             strokeWidth = 2.dp,
                         )
                     } else {
-                        Icon(Icons.Default.FolderOpen, contentDescription = null)
+                        Icon(Icons.Default.Add, contentDescription = null)
                     }
 
                     Spacer(Modifier.width(8.dp))
@@ -182,7 +182,7 @@ private fun ModelCard(
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 if (loaded) {
                     OutlinedButton(onClick = onUnload) {
-                        Icon(Icons.Default.Stop, contentDescription = null)
+                        Icon(Icons.Default.Clear, contentDescription = null)
                         Spacer(Modifier.width(6.dp))
                         Text("Unload")
                     }

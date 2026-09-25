@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.weight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
@@ -18,7 +17,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.FolderOpen
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Card
@@ -29,7 +27,9 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.ListItem
 import androidx.compose.material3.Surface
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
@@ -83,8 +83,8 @@ internal fun HomeScreen(
                     }
                 },
                 actions = {
-                    IconButton(onClick = onModels) {
-                        Icon(Icons.Default.FolderOpen, contentDescription = "الموديلات")
+                    TextButton(onClick = onModels) {
+                        Text("الموديلات")
                     }
                     IconButton(onClick = onSettings) {
                         Icon(Icons.Default.Settings, contentDescription = "الإعدادات")
@@ -188,27 +188,15 @@ private fun ChatTile(
     onDelete: (String) -> Unit,
 ) {
     Card(onClick = { onOpen(thread.id) }) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(14.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Surface(
-                shape = CircleShape,
-                color = MaterialTheme.colorScheme.primaryContainer,
-            ) {
-                NawaMark(42)
-            }
-
-            Spacer(Modifier.width(12.dp))
-
-            Column(Modifier.weight(1f)) {
+        ListItem(
+            headlineContent = {
                 Text(
                     text = thread.title,
                     fontWeight = FontWeight.Bold,
                     maxLines = 1,
                 )
+            },
+            supportingContent = {
                 Text(
                     text = thread.messages.lastOrNull()
                         ?.content
@@ -219,11 +207,20 @@ private fun ChatTile(
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     maxLines = 1,
                 )
-            }
-
-            IconButton(onClick = { onDelete(thread.id) }) {
-                Icon(Icons.Default.Delete, contentDescription = "حذف")
-            }
-        }
+            },
+            leadingContent = {
+                Surface(
+                    shape = CircleShape,
+                    color = MaterialTheme.colorScheme.primaryContainer,
+                ) {
+                    NawaMark(42)
+                }
+            },
+            trailingContent = {
+                IconButton(onClick = { onDelete(thread.id) }) {
+                    Icon(Icons.Default.Delete, contentDescription = "حذف")
+                }
+            },
+        )
     }
 }
