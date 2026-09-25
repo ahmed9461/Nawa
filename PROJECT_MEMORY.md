@@ -15,6 +15,7 @@
 - Model files are not stored in Git.
 - CPU-first implementation; GPU work is deferred until CPU inference is stable.
 - Release target is arm64-v8a to avoid shipping unnecessary ABIs for the personal-use build.
+- Package a single arm64 CPU backend rather than `GGML_CPU_ALL_VARIANTS`; keep KleidiAI enabled and measure the result on-device.
 
 ## UI source
 Nexora is the visual/interaction reference. Reuse the successful ideas, not its cloud-provider architecture:

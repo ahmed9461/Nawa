@@ -14,16 +14,14 @@ plans/0001-bootstrap-local-chat.md
 - Official llama.cpp Android binding reviewed.
 - Native Android + Compose architecture selected.
 - llama.cpp pin selected.
+- Native GGUF engine, model import, chat persistence, streaming UI, settings, and CI scaffold implemented.
+- GitHub Actions produced the first successful debug APK at commit `2e67486b7c7bea05c87554971b99846171b0d568`.
 
 ## In progress
-- Android project scaffold.
-- Nawa-owned llama.cpp JNI binding with safe mobile defaults.
-- Local model import/load flow.
-- Local chat UI and persistence.
-- Basic CI build.
+- Reduce packaged native CPU variants while preserving KleidiAI acceleration where applicable.
+- On-device validation of load/generation stability and reserved-token behavior.
 
 ## Not yet implemented
-- Verified APK build.
 - On-device test with Gemma 3 1B.
 - On-device test with Gemma 4 E2B.
 - Multimodal/mmproj.

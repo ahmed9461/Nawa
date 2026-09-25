@@ -28,3 +28,7 @@ Exclude: cloud provider clients, API key storage, provider routing, usage accoun
 ## D-007 — Conservative defaults
 Status: accepted
 Default context 2048, threads 4, batch 256, temperature 0.7, max generation 512. Settings can expand later with validation.
+
+## D-008 — Single arm64 CPU backend for the personal MVP
+Status: accepted
+Reason: the first successful debug artifact was larger than desired. Nawa does not need to package every llama.cpp Android CPU feature variant for this personal arm64 build. Keep a single portable arm64 CPU backend and KleidiAI acceleration where applicable, then validate performance on the target phone.

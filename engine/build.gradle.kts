@@ -21,7 +21,6 @@ android {
                     "-DLLAMA_OPENSSL=OFF",
                     "-DGGML_NATIVE=OFF",
                     "-DGGML_BACKEND_DL=ON",
-                    "-DGGML_CPU_ALL_VARIANTS=ON",
                     "-DGGML_LLAMAFILE=OFF"
                 )
             }

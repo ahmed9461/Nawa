@@ -27,3 +27,8 @@ Produce the first buildable Nawa Android MVP that can import/load a GGUF model a
 - Can a failed model leave the engine in a poisoned state?
 - Do Arabic and English messages choose sensible direction?
 - Are reserved/special-token failures visible rather than silently blank?
+
+## Current checkpoint — 2026-09-25
+- Steps 1–7 are implemented and the CI debug APK build is green.
+- Before step 8, reduce native packaging size and re-run CI.
+- Step 8 remains the next acceptance gate: real-device Gemma 3 1B, then Gemma 4 E2B.
