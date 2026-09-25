@@ -234,9 +234,11 @@ class NawaViewModel(application: Application) : AndroidViewModel(application) {
                     it.copy(isStreaming = false)
                 }
             } catch (cancelled: kotlinx.coroutines.CancellationException) {
+                activeThreadId = null
                 markLastStreamingStopped(threadId)
                 throw cancelled
             } catch (t: Throwable) {
+                activeThreadId = null
                 updateLastAssistantError(threadId, t.message ?: "فشل التوليد.")
                 showError(t)
             } finally {
