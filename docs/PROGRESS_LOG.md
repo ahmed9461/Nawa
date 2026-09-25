@@ -18,3 +18,6 @@
 
 - The slimmed debug build remained green, but inspecting the APK showed native llama.cpp shared libraries still carried debug information in the debug variant.
 - Switched CI to an optimized release-variant test APK with R8/resource shrinking, native symbol stripping, and temporary debug signing so the artifact remains directly installable for device testing.
+
+- Disabled Android cloud backup to keep Nawa's chats/settings strictly local-first.
+- Added a tiny vector adaptive Nawa launcher icon instead of shipping raster icon assets.
