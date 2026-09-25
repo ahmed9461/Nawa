@@ -1,0 +1,1 @@
+-keep class com.ahmed9461.nawa.engine.NawaInferenceEngine { *; }
