@@ -32,3 +32,7 @@ Default context 2048, threads 4, batch 256, temperature 0.7, max generation 512.
 ## D-008 — Single arm64 CPU backend for the personal MVP
 Status: accepted
 Reason: the first successful debug artifact was larger than desired. Nawa does not need to package every llama.cpp Android CPU feature variant for this personal arm64 build. Keep a single portable arm64 CPU backend and KleidiAI acceleration where applicable, then validate performance on the target phone.
+
+## D-009 — Optimized test APKs are temporarily debug-signed
+Status: accepted
+Reason: the personal MVP needs an installable, stripped, minified APK for device testing without committing any private signing key. CI therefore builds the release variant but signs it with the standard Android debug signing configuration. Proper personal release signing remains a later distribution step.

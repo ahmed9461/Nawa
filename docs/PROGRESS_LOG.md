@@ -15,3 +15,6 @@
 - First full debug APK build succeeded in GitHub Actions at commit `2e67486b7c7bea05c87554971b99846171b0d568`.
 - The first artifact archive was about 57.5 MB, so size optimization is now active before on-device validation.
 - Removed `GGML_CPU_ALL_VARIANTS` from the Nawa engine build; Nawa will keep one arm64 CPU backend and KleidiAI instead of packaging every CPU feature variant.
+
+- The slimmed debug build remained green, but inspecting the APK showed native llama.cpp shared libraries still carried debug information in the debug variant.
+- Switched CI to an optimized release-variant test APK with R8/resource shrinking, native symbol stripping, and temporary debug signing so the artifact remains directly installable for device testing.
