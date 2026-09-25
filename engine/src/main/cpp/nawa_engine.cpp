@@ -207,10 +207,23 @@ Java_com_ahmed9461_nawa_engine_NawaInferenceEngine_nativeProcessUserPrompt(
     }
 }
 
+static void finalize_assistant_message() {
+    if (g_assistant.str().empty()) return;
+    common_chat_msg assistant;
+    assistant.role = "assistant";
+    assistant.content = g_assistant.str();
+    g_messages.push_back(assistant);
+    g_assistant.str("");
+    g_assistant.clear();
+}
+
 extern "C" JNIEXPORT jstring JNICALL
 Java_com_ahmed9461_nawa_engine_NawaInferenceEngine_nativeGenerateNextToken(JNIEnv * env, jobject) {
     if (g_context == nullptr || g_sampler == nullptr) return nullptr;
-    if (g_position >= g_stop_position || g_position >= g_context_size - 1) return nullptr;
+    if (g_position >= g_stop_position || g_position >= g_context_size - 1) {
+        finalize_assistant_message();
+        return nullptr;
+    }
 
     const llama_token token = common_sampler_sample(g_sampler, g_context, -1);
     common_sampler_accept(g_sampler, token, true);
@@ -221,10 +234,7 @@ Java_com_ahmed9461_nawa_engine_NawaInferenceEngine_nativeGenerateNextToken(JNIEn
     ++g_position;
 
     if (llama_vocab_is_eog(llama_model_get_vocab(g_model), token)) {
-        common_chat_msg assistant;
-        assistant.role = "assistant";
-        assistant.content = g_assistant.str();
-        g_messages.push_back(assistant);
+        finalize_assistant_message();
         return nullptr;
     }
 
