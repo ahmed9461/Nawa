@@ -1,43 +1,22 @@
 # Roadmap
 
-## Phase 1 — Text-only local MVP
-- Native Android project and CI.
-- Import a GGUF model using the system file picker.
-- Copy model once into app-private storage.
-- Load/unload model on CPU.
-- Stream generated text.
-- Home/chat/models/settings screens inspired by Nexora.
-- Local conversation history.
-- Arabic RTL + English/LTR handling.
-- Conservative memory defaults and useful load/generation errors.
+## Phase 1 — Local text MVP
+Implemented: Android/Compose app, local GGUF import, CPU load/unload, streaming, private conversation persistence, Arabic/English/code direction, settings and CI. Physical-device text-generation acceptance remains open.
 
-## Phase 2 — Reliability and diagnostics
-- Token/s and TTFT metrics.
-- Raw inference diagnostics for reserved-token/template failures.
-- Cancel generation.
-- Model metadata display.
-- Context/thread/max-token settings with validated safe ranges.
-- Stress tests for repeated load/unload and long chats.
+## Phase 2 — Reliability and diagnostics (0.2.0)
+Implemented: atomic storage/recovery guards; streaming checkpoints; backup export/merge; native exception and Unicode boundaries; whole-operation serialization; cancellation; context budgeting; import header/storage validation and progress; TTFT/token-rate metrics; model description; unit/native smoke tests; actual APK checks; verified Gradle Wrapper.
+Remaining acceptance: Android JNI/runtime and sustained phone tests, realistic instruction models/templates, thermal/memory pressure, same-certificate upgrade test.
 
 ## Phase 3 — Rich chat
-- Better Markdown coverage.
-- Copyable fenced code blocks.
-- Edit/resend and regenerate.
-- Search/rename/delete chats.
-- Export/import conversation backups.
+Implemented: copyable code/message, rename/search/delete confirmation, regenerate last response, saved drafts and screens, intentional scroll following.
+Later: full Markdown renderer, editing arbitrary messages/branching responses, per-conversation model/settings profiles.
 
-## Phase 4 — Multimodal
-- mmproj management.
-- Image selection and vision prompts.
-- Image token budget controls.
-- Compatibility checks between model and projection file.
+## Phase 4 — Multimodal (deferred)
+mmproj lifecycle, image inputs, image token budgets, model/projector compatibility. Do not add before text reliability gate is passed.
 
-## Phase 5 — Acceleration
-- Evaluate current llama.cpp Android GPU backends.
-- Add acceleration only when it is measurably faster and as stable as CPU.
-- Keep a CPU fallback.
+## Phase 5 — Acceleration (deferred)
+Benchmark GPU against CPU on target devices; keep CPU fallback. No current GPU-speed claims.
 
-## Phase 6 — Distribution polish
-- Nawa launcher icon and visual identity.
-- Signed personal release workflow.
-- Small release APK/AAB, R8/resource shrinking, changelog.
+## Phase 6 — Distribution
+Implemented: arm64 packaging, minification, vector icon, versioned stable application ID, explicit no-debug-fallback release signing.
+Remaining: provision the SAME private key to a trusted signing environment, physical same-key upgrade verification, owner decision on Nawa license, complete distribution notice review and wider-device QA. Never commit private signing material.

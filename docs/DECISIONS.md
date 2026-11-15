@@ -1,42 +1,46 @@
 # Decisions
 
 ## D-001 — Native Android instead of Flutter
-Status: accepted
-Reason: direct control of JNI/inference lifecycle, lower architectural overhead for a local-only app, and easier diagnosis of native model failures. Nexora remains the UI reference.
+Accepted. Kotlin/Compose avoids a second runtime around native inference. Nexora remains a visual reference only.
 
-## D-002 — Own the JNI binding
-Status: accepted
-Reason: the official llama.cpp Android sample is an excellent base, but its example defaults (including a large context) are not tuned for Nawa's conservative mobile memory policy. Nawa keeps a small binding it can tune.
+## D-002 — Nawa-owned JNI binding
+Accepted. Nawa controls resource lifetime, conservative settings, errors, cancellation, UTF conversion and metrics.
 
 ## D-003 — CPU first
-Status: accepted
-Reason: the current goal is correctness and stability. GPU acceleration will be measured later rather than enabled by default.
+Accepted. GPU is deferred until measurable device stability/performance justify it.
 
 ## D-004 — arm64-v8a only
-Status: accepted for personal MVP
-Reason: avoids shipping x86_64 native libraries and reduces build/release size. Revisit if emulator or broader distribution becomes necessary.
+Accepted for personal use; enforced in both app and engine. Android 13+ remains the minimum.
 
 ## D-005 — No network permission
-Status: accepted
-Reason: MVP imports existing GGUF files and runs them locally. A future downloader would be a separate explicit feature.
+Accepted. Import existing GGUF files; no telemetry, accounts, backend, or hidden network fallback.
 
-## D-006 — Nexora is a UX donor, not an architecture donor
-Status: accepted
-Reuse: Material 3 direction, color language, chat list, rounded composer, RTL-aware messages, code presentation.
-Exclude: cloud provider clients, API key storage, provider routing, usage accounting, media/audio stack.
+## D-006 — Nexora donates UX, not cloud architecture
+Accepted. Material 3, purple/navy surfaces, rounded composer, RTL text and LTR code; no provider/API-key code.
 
 ## D-007 — Conservative defaults
-Status: accepted
-Default context 2048, threads 4, batch 256, temperature 0.7, max generation 512. Settings can expand later with validation.
+Accepted. Context 2048, CPU threads 4, batch 256, temperature 0.7, output 512, with validated bounds.
 
-## D-008 — Single arm64 CPU backend for the personal MVP
-Status: accepted
-Reason: the first successful debug artifact was larger than desired. Nawa does not need to package every llama.cpp Android CPU feature variant for this personal arm64 build. Keep a single portable arm64 CPU backend and KleidiAI acceleration where applicable, then validate performance on the target phone.
+## D-008 — Single CPU backend
+Accepted. Single portable arm64 CPU path and KleidiAI; real-device speed remains to be measured.
 
-## D-009 — Optimized test APKs are temporarily debug-signed
-Status: accepted
-Reason: the personal MVP needs an installable, stripped, minified APK for device testing without committing any private signing key. CI therefore builds the release variant but signs it with the standard Android debug signing configuration. Proper personal release signing remains a later distribution step.
+## D-009 — Temporary debug-signed release APKs
+SUPERSEDED by D-011. Historical 0.1 builds used changing runner-local debug keys, preventing dependable updates. Do not restore this fallback.
 
-## D-010 — Statically link llama.cpp into one stripped JNI library
-Status: accepted
-Reason: even the optimized APK still packaged multiple large llama.cpp shared libraries carrying debug information. Nawa now statically links its required llama.cpp/common/ggml code into `libnawa-engine.so`, keeps only the arm64 CPU path, and strips the final JNI library. This should materially reduce installed/download size without removing local inference features.
+## D-010 — Static native linkage
+Accepted. llama.cpp/common/ggml are linked into one stripped JNI library; dependent OpenMP remains packaged. No claim that only one .so exists.
+
+## D-011 — Stable identity and private signing
+Accepted for 0.2.0. New durable ID com.ahmed9461.nawa.stable coexists with old installs; old private data are not automatically accessible. Release builds are unsigned unless explicit private signing credentials are supplied; debug builds have a separate suffix. Preserve the stable signing key privately for later updates. No keys/passwords in Git/public artifacts. CI signing secrets require separate provisioning.
+
+## D-012 — Process-owned backend and deterministic prompts
+Accepted. Lazy process lifetime, explicit model unload, no destroyed-singleton reuse or runBlocking. Serialize full operations, not only individual native calls. Rebuild the whole templated recent prompt each turn; trim oldest complete exchanges within inference only, retain full disk history. Extra prompt work is accepted in favor of correctness/recovery.
+
+## D-013 — Atomic storage and deliberate backup
+Accepted. AtomicFile plus one write queue; read failure blocks overwrite. Periodic streamed checkpoints; versioned plaintext JSON export/validated merge via user intent. OS cloud/device transfer disabled. Backup does not include model weights/settings.
+
+## D-014 — Foreground generation
+Accepted for this version. Backgrounding stops generation; no background service/wake lock is promised. Partial answers remain recoverable from the last checkpoint.
+
+## D-015 — Evidence-based validation
+Accepted. Build/JVM/native host tests and binary APK inspection are distinct from Android runtime, physical-device tests and compatibility across instruction templates. Green workflow status alone is not evidence when logs show a failed gate; use strict shell pipelines and a negative verifier test.

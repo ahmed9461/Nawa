@@ -6,6 +6,9 @@ on:
   workflow_dispatch:
 permissions:
   contents: read
+defaults:
+  run:
+    shell: bash
 concurrency:
   group: nawa-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
@@ -13,43 +16,19 @@ jobs:
   android:
     runs-on: ubuntu-latest
     timeout-minutes: 60
-    # Temporary wrapper bootstrap permission; removed once generated wrapper is committed.
-    permissions:
-      contents: write
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
         with:
           submodules: recursive
           fetch-depth: 1
-      - uses: actions/setup-java@v5
+          persist-credentials: false
+      - uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5
         with:
           distribution: temurin
           java-version: '17'
-      - uses: gradle/actions/setup-gradle@v4
+      - uses: gradle/actions/setup-gradle@ed408507eac070d1f99cc633dbcf757c94c7933a # v4
         with:
           gradle-version: '8.13'
-      - name: Bootstrap verified Gradle Wrapper once
-        env:
-          BRANCH: ${{ github.ref_name }}
-          EVENT: ${{ github.event_name }}
-        run: |
-          if [ ! -f gradlew ]; then
-            mkdir -p "$RUNNER_TEMP/nawa-wrapper"
-            echo 'rootProject.name = "wrapper-bootstrap"' > "$RUNNER_TEMP/nawa-wrapper/settings.gradle.kts"
-            CHECKSUM=$(curl -fsSL --retry 3 https://services.gradle.org/distributions/gradle-8.13-bin.zip.sha256)
-            gradle -p "$RUNNER_TEMP/nawa-wrapper" wrapper --gradle-version 8.13 --distribution-type bin --gradle-distribution-sha256-sum "$CHECKSUM" --no-daemon
-            cp "$RUNNER_TEMP/nawa-wrapper/gradlew" .
-            cp "$RUNNER_TEMP/nawa-wrapper/gradlew.bat" .
-            cp -r "$RUNNER_TEMP/nawa-wrapper/gradle/wrapper" gradle/
-            chmod +x gradlew
-            if [ "$EVENT" = push ] && [ "$BRANCH" = fix/audit-hardening ]; then
-              git config user.name 'github-actions[bot]'
-              git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-              git add gradlew gradlew.bat gradle/wrapper
-              git commit -m 'build: add verified Gradle 8.13 wrapper'
-              git push origin "HEAD:$BRANCH"
-            fi
-          fi
       - name: Install native toolchain
         run: |
           SDKMANAGER="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
@@ -57,12 +36,21 @@ jobs:
           "$SDKMANAGER" 'platforms;android-36' 'build-tools;36.0.0' 'ndk;29.0.13113456' 'cmake;3.31.6'
       - name: Unit tests, lint, and release APK
         run: ./gradlew :engine:testReleaseUnitTest :app:testReleaseUnitTest :app:lintRelease :app:assembleRelease --stacktrace --no-daemon
-      - name: Verify actual APK
+      - name: Verify actual APK and verify that negative checks fail
         run: |
-          mkdir -p delivery
-          python3 scripts/verify_apk.py app/build/outputs/apk/release/app-release-unsigned.apk --aapt2 "$ANDROID_HOME/build-tools/36.0.0/aapt2" --zipalign "$ANDROID_HOME/build-tools/36.0.0/zipalign" | tee delivery/apk-verification.txt
-          cp app/build/outputs/apk/release/app-release-unsigned.apk delivery/Nawa-0.2.0-arm64-unsigned.apk
+          set -euo pipefail
+          mkdir -p delivery/tools
+          APK=app/build/outputs/apk/release/app-release-unsigned.apk
+          AAPT="$ANDROID_HOME/build-tools/36.0.0/aapt2"
+          ALIGN="$ANDROID_HOME/build-tools/36.0.0/zipalign"
+          python3 scripts/verify_apk.py "$APK" --aapt2 "$AAPT" --zipalign "$ALIGN" | tee delivery/apk-verification.txt
+          if python3 scripts/verify_apk.py "$APK" --aapt2 "$AAPT" --zipalign "$ALIGN" --expected-min-sdk 34 > delivery/negative-verifier-check.txt 2>&1; then
+            echo 'ERROR: verifier accepted an intentionally incorrect minimum SDK'; exit 1
+          fi
+          echo 'Negative verifier check correctly failed.' >> delivery/negative-verifier-check.txt
+          cp "$APK" delivery/Nawa-0.2.0-arm64-unsigned.apk
           cp "$ANDROID_HOME/build-tools/36.0.0/lib/apksigner.jar" delivery/apksigner.jar
+          cp "$AAPT" "$ALIGN" delivery/tools/
       - name: Collect reproducible source and reports
         if: always()
         run: |
@@ -70,7 +58,7 @@ jobs:
           git rev-parse HEAD > delivery/source-commit.txt
           git archive --format=tar HEAD | gzip > delivery/Nawa-source.tar.gz
           tar -czf delivery/test-reports.tar.gz app/build/reports app/build/test-results engine/build/reports engine/build/test-results 2>/dev/null || true
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         if: always()
         with:
           name: Nawa-0.2.0-build
@@ -80,9 +68,10 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 45
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
         with:
           submodules: recursive
+          persist-credentials: false
       - name: Unicode checks with memory sanitizers
         run: |
           c++ -std=c++17 -g -fsanitize=address,undefined tests/native/utf_tests.cpp -o /tmp/nawa-utf-tests
@@ -91,16 +80,15 @@ jobs:
         run: |
           cmake -S tests/native -B build/native -DCMAKE_BUILD_TYPE=Release
           cmake --build build/native --target nawa_native_tests -j2
-      - name: Download tiny public test fixture (not shipped in APK)
+      - name: Download and authenticate tiny public test fixture (not shipped in APK)
         run: |
           mkdir -p build/fixtures
           curl -fL --retry 3 https://huggingface.co/ggml-org/models/resolve/main/tinyllamas/stories260K.gguf -o build/fixtures/stories260K.gguf
-          sha256sum build/fixtures/stories260K.gguf | tee build/fixture-sha256.txt
+          echo '270cba1bd5109f42d03350f60406024560464db173c0e387d91f0426d3bd256d  build/fixtures/stories260K.gguf' | sha256sum --check
+          sha256sum build/fixtures/stories260K.gguf > build/fixture-sha256.txt
       - name: Real GGUF inference and failure-path smoke checks
-        run: |
-          set -o pipefail
-          build/native/nawa_native_tests build/fixtures/stories260K.gguf 2>&1 | tee build/native-smoke.log
-      - uses: actions/upload-artifact@v4
+        run: build/native/nawa_native_tests build/fixtures/stories260K.gguf 2>&1 | tee build/native-smoke.log
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         if: always()
         with:
           name: Nawa-native-checks
