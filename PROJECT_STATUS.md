@@ -1,35 +1,21 @@
 # Project Status
 
-Last updated: 2026-09-25
+Last updated: 2026-11-16
 
 ## Current state
-Bootstrap in progress. Repository initialized and architecture selected.
+0.2.0 reliability hardening implemented on a review branch; automated validation and APK inspection are in progress. Do not describe this as a physically device-validated release.
 
 ## Active plan
 plans/0001-bootstrap-local-chat.md
 
-## Implemented
-- Repository created.
-- Nexora UI structure reviewed.
-- Official llama.cpp Android binding reviewed.
-- Native Android + Compose architecture selected.
-- llama.cpp pin selected.
-- Native GGUF engine, model import, chat persistence, streaming UI, settings, and CI scaffold implemented.
-- GitHub Actions produced the first successful debug APK at commit `2e67486b7c7bea05c87554971b99846171b0d568`.
+## Implemented in this phase
+Atomic serialized storage and recovery guard; versioned JSON backup/merge; periodic streaming checkpoints; native RAII/error containment; standard UTF-8 byte streaming and safe UTF-16 input; process-owned serialized engine; abort callbacks; bounded recent-history prompts; model import progress/cancellation/header/storage checks; diagnostics and metrics; state restoration/RTL/IME/delete confirmation/rename/regenerate; stable application identity and explicit signing policy; unit/native/packaging CI checks.
 
-## In progress
-- Reduce packaged native CPU variants while preserving KleidiAI acceleration where applicable.
-- On-device validation of load/generation stability and reserved-token behavior.
+## Pending verification
+Run all checks on the exact candidate commit, inspect the produced APK, and record actual results. Provision/retain a private permanent signing key outside Git for the delivery. Automated CI signing secrets are not configured by source changes alone.
 
-## Not yet implemented
-- On-device test with Gemma 3 1B.
-- On-device test with Gemma 4 E2B.
-- Multimodal/mmproj.
-- GPU/OpenCL/Vulkan acceleration.
-- In-app model downloads.
-- Export/import backups.
+## Physical-device gate
+No physical Android-device validation has been performed in this hardening pass. Real-model phone tests, sustained memory/thermal behavior and same-key upgrade acceptance remain required.
 
-## Known risks
-- Large GGUF files can exceed available RAM during load; defaults must remain conservative.
-- Some Gemma builds/templates can emit reserved tokens when chat formatting is wrong. Nawa must use current llama.cpp templating and surface diagnostics instead of hiding the output.
-- Android app sandboxing prevents directly reading another app's private model files.
+## Still intentionally deferred
+Vision/mmproj, voice, GPU acceleration, network model downloads, full Markdown renderer, and broad-device distribution.

@@ -1,57 +1,19 @@
 # Architecture
 
-## Stack
-- Kotlin 2.3
-- Jetpack Compose + Material 3
-- Single Android app module
-- Nawa engine Android library module
-- llama.cpp pinned as a Git submodule
-- Kotlin coroutines/Flow for streaming
+`app/` contains Compose screens, ViewModel state, atomic chat persistence and local model imports. `engine/` contains the coroutine API, JNI byte bridge, and an Android-independent RAII inference session. `third_party/llama.cpp` is a pinned submodule.
 
-## Modules
-```
-app/
-  UI, view model, chat/model stores
-engine/
-  Kotlin inference API + JNI bridge + Nawa-owned C++
-third_party/llama.cpp/
-  pinned upstream source
-```
+SAF model URI → validated buffered private copy → serialized native load → templated bounded prompt → CPU decode → UTF-8 byte pieces → incremental Kotlin decoder → batched UI updates → periodic atomic chat checkpoints.
 
-## Data flow
-```
-SAF Uri -> ModelStore -> app-private .gguf
-                         |
-                         v
-                  NawaInferenceEngine
-                         |
-                         v
-                 token Flow<String>
-                         |
-                         v
-                  NawaViewModel
-                         |
-                         v
-                    Compose UI
-```
+## Lifetimes and concurrency
+The backend has process lifetime and initializes lazily off the UI thread. ViewModel destruction cancels work but never destroys a singleton still returned by get(). Load/unload/generation share one coroutine Mutex for entire operations; JNI calls also guard native state. Cancellation is a separate atomic flag so it can interrupt decode without waiting for that lock. No runBlocking is used in the app engine.
 
-## Why native Android
-Nexora is Flutter and is a strong UI reference, but Nawa's core problem is local native inference. Native Android removes an extra runtime/bridge layer around the hot inference path and lets the project own JNI, model lifecycle, memory settings, and diagnostics.
+Writes go through one ViewModel writer queue; all file reads/writes are protected by the store Mutex and AtomicFile. New ViewModels wait for a closing writer before reading. UI edits remain disabled until storage initialization succeeds. A read failure blocks replacement until explicit validated recovery. Streamed content is checkpointed approximately once per second plus before/after generation.
 
-## Memory policy
-- Default context: 2048.
-- Default threads: 4.
-- Default batch: 256.
-- Model load and generation run off the main thread.
-- Only one model is loaded at a time.
-- Only one generation is active at a time.
-- UI must remain responsive during load and generation.
+## Prompt policy
+Each generation constructs one full prompt using the model's Jinja template (or documented completion fallback), then tokenizes once. Old complete exchanges are removed until the context budget fits. The system instruction and current prompt remain; an oversized current prompt fails clearly. Full persisted transcripts are not truncated. This correctness-first approach trades additional prompt processing for predictable recovery/model switching.
 
-## Model import
-The native engine expects a readable filesystem path. Android SAF returns a content Uri, so Nawa copies the selected model once into app-private storage using buffered streaming. This also avoids depending on fragile external-storage paths.
+## Ownership and privacy
+A loaded model remains process-owned until explicitly unloaded or process death. Backgrounding cancels generation but does not promise persistent background execution. No network/account/telemetry services. User exports are intentional plaintext files; OS backup/transfer are excluded. Model and signing files are never committed.
 
-## Chat templating
-The engine uses the model's embedded chat template through current llama.cpp common chat helpers and requests Jinja formatting. This is a deliberate response to reserved-token failures seen in other mobile clients.
-
-## Privacy
-The MVP requests no Internet permission. Prompts, responses, models, and chat history stay on-device.
+## Validation boundaries
+Core native inference is exercised on a host fixture; JNI, Android lifecycle, device RAM/thermals and model-specific phone compatibility require separate physical-device tests. Automated successes must not be presented as those tests.

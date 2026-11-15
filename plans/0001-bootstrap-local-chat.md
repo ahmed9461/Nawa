@@ -1,34 +1,24 @@
-# Plan 0001 — Bootstrap Local Chat
+# Plan 0001 — Reliable Local Chat
 
 Status: active
 
 ## Goal
-Produce the first buildable Nawa Android MVP that can import/load a GGUF model and stream a text response through a polished local chat UI.
+Ship a buildable, data-safe, CPU-first Android text client. A successful APK build alone does not close the on-device acceptance gate.
 
-## Steps
-1. Scaffold Gradle/Android/Compose project.
-2. Add pinned llama.cpp submodule and Nawa engine module.
-3. Implement safe configurable CPU context, model lifecycle, Jinja chat formatting, and token streaming.
-4. Implement app stores for imported models and local chats.
-5. Implement Home, Models, Chat, Settings, and the Nexora-inspired theme/composer/message UI.
-6. Add CI that clones submodules and builds a debug APK.
-7. Review build failures and fix until CI is green.
-8. Test on-device in this order:
-   - Gemma 3 1B
-   - Gemma 4 E2B
-9. Record token output, TTFT/tokens-per-second observations, crashes, and reserved-token behavior.
-10. Close this plan only after a real model produces visible normal text on-device.
+## Hardening checkpoint — 2026-11-16
+1. Serialize chat writes, use atomic replacement, preserve corrupt data, gate edits until startup completes, and checkpoint streamed answers.
+2. Add explicit JSON backup/export and validated merge import without deleting existing conversations.
+3. Contain native exceptions, fix UTF-8/UTF-16 at JNI boundaries, report native failures, and support cancellation.
+4. Give the native backend process lifetime and serialize model operations; avoid runBlocking and destroyed-singleton reuse.
+5. Rebuild templated prompts with a bounded recent-history window; retain the full history on disk.
+6. Improve imports (GGUF header, storage checks, progress, cancel, Unicode filenames), UI state restoration, confirmation, and diagnostics.
+7. Restrict the APK to arm64; use an independent stable package to preserve old debug-signed installs. Release builds must never silently fall back to ephemeral debug signing.
+8. Add storage/config/native tests, lint, native smoke tests, Gradle Wrapper, signing/backup/build documentation, and a verified APK artifact.
 
-## Self-review checklist
-- Is any dependency unnecessary?
-- Is any expensive work on the main thread?
-- Can a model load twice or generation overlap?
-- Does cancellation free the UI immediately?
-- Can a failed model leave the engine in a poisoned state?
-- Do Arabic and English messages choose sensible direction?
-- Are reserved/special-token failures visible rather than silently blank?
-
-## Current checkpoint — 2026-09-25
-- Steps 1–7 are implemented and the CI debug APK build is green.
-- Before step 8, reduce native packaging size and re-run CI.
-- Step 8 remains the next acceptance gate: real-device Gemma 3 1B, then Gemma 4 E2B.
+## Acceptance
+- Automated tests, lint, and release assembly must pass on the exact delivery commit.
+- Inspect the produced APK's permissions, ABI, version, and signature.
+- Test native text generation using a small GGUF fixture on CI; distinguish this from Android/device testing.
+- Physical-phone tests remain explicit: sustained load/unload, Arabic/emoji, memory pressure, rotation, stop/retry, backup recovery, and upgrade using the same signing certificate.
+- No model weights, signing keys, passwords, APKs, or generated build outputs may enter Git.
+- GPU, vision, audio, and network/model download features remain outside this text-reliability phase.

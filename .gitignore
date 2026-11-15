@@ -12,5 +12,11 @@ captures/
 *.aab
 *.jks
 *.keystore
+*.p12
+*.pem
+.env
+.env.*
 models/
 *.gguf
+delivery/
+invalid-test.gguf

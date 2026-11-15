@@ -1,30 +1,17 @@
 # Progress Log
 
-## 2026-09-25
-- Initialized ahmed9461/Nawa.
-- Audited Nexora's theme, home/chat screens, composer, message rendering, Markdown/code handling, chat model, and local chat store.
-- Chose which Nexora ideas to carry into Nawa and explicitly excluded cloud-provider/API-key/media code.
-- Reviewed current official llama.cpp Android documentation and binding.
-- Pinned llama.cpp commit 4b1a27fa0eb875bbca4f6cfe936e3d65adc685c0.
-- Chose native Kotlin + Compose with a Nawa-owned JNI binding.
-- Defined conservative CPU-first inference defaults and arm64-only MVP packaging.
-- Started plan 0001.
+## 2026-11-16 — Reliability hardening
+- Added atomic serialized chat persistence, startup read guards, recoverable corruption handling, and streaming checkpoints.
+- Added versioned JSON export/validated merge import without overwriting conflicting local data.
+- Refactored native resources into a host-testable RAII session; guarded JNI operations; separated native errors from EOS.
+- Replaced Modified-UTF-8 misuse with UTF-16 input conversion and byte-array output with incremental UTF-8 decoding.
+- Process-owned lazy backend, full-operation serialization, abort/progress cancellation, bounded recent prompt construction.
+- Added import progress, cancellation, header/storage checks, Unicode names and split-file rejection.
+- Improved saved UI state, drafts, RTL arrows, keyboard handling, scrolling, model attribution, confirmation, rename/regenerate, metrics and backup UI.
+- Restricted APK ABIs at the application layer; introduced an independent stable app ID so old debug-signed data need not be deleted.
+- Release signing is explicit and fail-closed (unsigned without credentials), not per-run debug signing.
+- Added unit, native sanitizer/smoke, lint and actual-APK verification jobs; validation results pending.
+- Physical-phone acceptance is still pending and is not inferred from CI.
 
-- Fixed Android CI SDK-manager discovery and aligned Compose/Lifecycle versions with AGP 8.13.
-- Fixed lightweight Compose icon/layout compatibility without adding the large material-icons-extended dependency.
-- First full debug APK build succeeded in GitHub Actions at commit `2e67486b7c7bea05c87554971b99846171b0d568`.
-- The first artifact archive was about 57.5 MB, so size optimization is now active before on-device validation.
-- Removed `GGML_CPU_ALL_VARIANTS` from the Nawa engine build; Nawa will keep one arm64 CPU backend and KleidiAI instead of packaging every CPU feature variant.
-
-- The slimmed debug build remained green, but inspecting the APK showed native llama.cpp shared libraries still carried debug information in the debug variant.
-- Switched CI to an optimized release-variant test APK with R8/resource shrinking, native symbol stripping, and temporary debug signing so the artifact remains directly installable for device testing.
-
-- Disabled Android cloud backup to keep Nawa's chats/settings strictly local-first.
-- Added a tiny vector adaptive Nawa launcher icon instead of shipping raster icon assets.
-
-- Inspected the optimized APK directly: it was still about 134 MB because several llama.cpp shared libraries retained debug sections.
-- Switched the native engine to static llama.cpp linkage with one stripped JNI library and linker garbage collection.
-- Hardened model switching so a failed replacement load cannot leave the UI claiming the old model is still loaded.
-- Added cleanup for interrupted `.part` model imports and clearer Arabic import errors.
-- Reserved Gemma-style special-token loops are now withheld from the visible answer and converted into an explicit compatibility error after a short streak.
-- Prevented sending into a second chat while another chat is generating.
+## 2026-09-25 — Original MVP
+Initialized repository and pinned llama.cpp; implemented native GGUF import/inference, Compose screens, local persistence and CI. First successful debug APK: 2e67486b7c7bea05c87554971b99846171b0d568. Static native linkage and resource shrinking later reduced packaging size. Real-device model acceptance remained open.

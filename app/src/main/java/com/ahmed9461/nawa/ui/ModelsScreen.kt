@@ -3,39 +3,14 @@ package com.ahmed9461.nawa.ui
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material.icons.filled.Clear
-import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.runtime.Composable
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -44,176 +19,63 @@ import com.ahmed9461.nawa.data.LocalModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-internal fun ModelsScreen(
-    state: NawaUiState,
-    onBack: () -> Unit,
-    onImport: (Uri) -> Unit,
-    onLoad: (LocalModel) -> Unit,
-    onUnload: () -> Unit,
-    onDelete: (LocalModel) -> Unit,
-) {
-    val launcher =
-        rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
-            if (uri != null) {
-                onImport(uri)
-            }
-        }
-
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = {
-                    Column {
-                        Text("الموديلات", fontWeight = FontWeight.Bold)
-                        Text(
-                            text = state.engineLabel,
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                    }
-                },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "رجوع")
-                    }
-                },
-            )
-        },
-    ) { padding ->
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding),
-            contentPadding = PaddingValues(14.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp),
-        ) {
+internal fun ModelsScreen(state: NawaUiState, onBack: () -> Unit, onImport: (Uri) -> Unit,
+    onLoad: (LocalModel) -> Unit, onUnload: () -> Unit, onDelete: (LocalModel) -> Unit,
+    onCancelImport: () -> Unit, onCancelLoad: () -> Unit) {
+    val picker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { it?.let(onImport) }
+    var deletePath by rememberSaveable { mutableStateOf<String?>(null) }
+    Scaffold(topBar = {
+        TopAppBar(title = { Column { Text("الموديلات", fontWeight = FontWeight.Bold); Text(state.engineLabel, style = MaterialTheme.typography.labelSmall) } },
+            navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "رجوع") } })
+    }) { padding ->
+        LazyColumn(Modifier.fillMaxSize().padding(padding), contentPadding = PaddingValues(14.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             item {
-                Button(
-                    onClick = { launcher.launch(arrayOf("*/*")) },
-                    enabled = !state.importBusy,
-                    modifier = Modifier.fillMaxWidth(),
-                ) {
-                    if (state.importBusy) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(18.dp),
-                            strokeWidth = 2.dp,
-                        )
-                    } else {
-                        Icon(Icons.Default.Add, contentDescription = null)
-                    }
-
-                    Spacer(Modifier.width(8.dp))
-                    Text(
-                        if (state.importBusy) {
-                            "جاري نسخ الموديل…"
-                        } else {
-                            "إضافة ملف GGUF"
-                        }
-                    )
+                FilledTonalButton(onClick = { picker.launch(arrayOf("*/*")) }, enabled = !state.importBusy && !state.engineBusy, modifier = Modifier.fillMaxWidth()) {
+                    Text("إضافة ملف GGUF محلي")
                 }
-
-                Text(
-                    text = "يُنسخ الملف مرة واحدة إلى مساحة Nawa الخاصة. " +
-                        "الدردشة نفسها لا تحتاج إلى الإنترنت.",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(top = 8.dp),
-                )
+                Text("يُنسخ الموديل إلى مساحة Nawa الخاصة. احتفظ بالملف الأصلي خارج التطبيق؛ حذف التطبيق يزيل النسخة الداخلية.",
+                    Modifier.padding(top = 8.dp), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text("الذاكرة المتاحة عند آخر فحص: ${state.availableMemoryMb} MB • CPU / ARM64", Modifier.padding(top = 8.dp), style = MaterialTheme.typography.labelMedium)
             }
-
-            if (state.models.isEmpty()) {
-                item {
-                    Surface(
-                        shape = RoundedCornerShape(20.dp),
-                        color = MaterialTheme.colorScheme.surfaceVariant,
-                        modifier = Modifier.fillMaxWidth(),
-                    ) {
-                        Text(
-                            text = "لا توجد موديلات مضافة بعد.",
-                            modifier = Modifier.padding(18.dp),
-                        )
-                    }
-                }
+            if (state.importBusy) item {
+                Card { Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Text("جاري نسخ الموديل…")
+                    val total = state.importProgress.total
+                    if (total != null && total > 0) LinearProgressIndicator(progress = { (state.importProgress.copied.toFloat() / total).coerceIn(0f, 1f) }, modifier = Modifier.fillMaxWidth())
+                    else LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+                    Text(formatBytes(state.importProgress.copied) + (total?.let { " / ${formatBytes(it)}" } ?: ""))
+                    TextButton(onClick = onCancelImport) { Text("إلغاء النسخ") }
+                } }
             }
-
+            if (state.models.isEmpty() && !state.importBusy) item {
+                Text("لا توجد موديلات بعد. اختر ملف GGUF نصيًا متوافقًا مع ذاكرة هاتفك.", Modifier.padding(20.dp))
+            }
             items(state.models, key = { it.path }) { model ->
-                ModelCard(
-                    model = model,
-                    loaded = state.loadedModel?.path == model.path,
-                    loading = state.loadingModelPath == model.path,
-                    onLoad = { onLoad(model) },
-                    onUnload = onUnload,
-                    onDelete = { onDelete(model) },
-                )
+                val loaded = state.loadedModel?.path == model.path
+                val loading = state.loadingModelPath == model.path
+                Card { Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Text(model.name, fontWeight = FontWeight.Bold)
+                    Text(formatBytes(model.sizeBytes), style = MaterialTheme.typography.bodySmall)
+                    if (loaded) Text(state.engineDescription, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary)
+                    if (model.sizeBytes > state.availableMemoryMb * 1024 * 1024 && state.availableMemoryMb > 0)
+                        Text("الموديل كبير مقارنة بالذاكرة المتاحة. قد يفشل تحميله؛ جرّب موديلًا أصغر أو سياقًا أقل.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        if (loading) {
+                            CircularProgressIndicator(Modifier.size(24.dp), strokeWidth = 2.dp)
+                            TextButton(onClick = onCancelLoad) { Text("إلغاء التحميل") }
+                        } else Button(onClick = { if (loaded) onUnload() else onLoad(model) }, enabled = !state.engineBusy) {
+                            Text(if (loaded) "تفريغ الذاكرة" else "تحميل الموديل")
+                        }
+                        OutlinedButton(onClick = { deletePath = model.path }, enabled = !loaded && !state.engineBusy) { Text("حذف") }
+                    }
+                } }
             }
         }
     }
-}
-
-@Composable
-private fun ModelCard(
-    model: LocalModel,
-    loaded: Boolean,
-    loading: Boolean,
-    onLoad: () -> Unit,
-    onUnload: () -> Unit,
-    onDelete: () -> Unit,
-) {
-    Card {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-        ) {
-            Text(
-                text = model.name,
-                fontWeight = FontWeight.Bold,
-            )
-
-            Text(
-                text = formatBytes(model.sizeBytes),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(top = 4.dp),
-            )
-
-            Spacer(Modifier.height(12.dp))
-
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                if (loaded) {
-                    OutlinedButton(onClick = onUnload) {
-                        Icon(Icons.Default.Clear, contentDescription = null)
-                        Spacer(Modifier.width(6.dp))
-                        Text("Unload")
-                    }
-                } else {
-                    Button(
-                        onClick = onLoad,
-                        enabled = !loading,
-                    ) {
-                        if (loading) {
-                            CircularProgressIndicator(
-                                modifier = Modifier.size(18.dp),
-                                strokeWidth = 2.dp,
-                            )
-                        } else {
-                            Icon(Icons.Default.PlayArrow, contentDescription = null)
-                        }
-
-                        Spacer(Modifier.width(6.dp))
-                        Text(if (loading) "Loading…" else "Load")
-                    }
-                }
-
-                OutlinedButton(
-                    onClick = onDelete,
-                    enabled = !loaded && !loading,
-                ) {
-                    Icon(Icons.Default.Delete, contentDescription = null)
-                    Spacer(Modifier.width(6.dp))
-                    Text("حذف")
-                }
-            }
-        }
+    deletePath?.let { path ->
+        AlertDialog(onDismissRequest = { deletePath = null }, title = { Text("حذف نسخة الموديل؟") },
+            text = { Text("سيُحذف الملف من مساحة Nawa فقط، وليس ملفك الأصلي. لن تُحذف المحادثات.") },
+            confirmButton = { TextButton(onClick = { state.models.find { it.path == path }?.let(onDelete); deletePath = null }) { Text("حذف") } },
+            dismissButton = { TextButton(onClick = { deletePath = null }) { Text("إلغاء") } })
     }
 }
