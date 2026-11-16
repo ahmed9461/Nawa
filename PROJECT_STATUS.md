@@ -3,27 +3,28 @@
 Last updated: 2026-11-16
 
 ## Current state
-0.2.0 reliability candidate is implemented. The first validation run compiled the release APK, passed 14 JVM tests and lint with no errors, and passed native host checks with actual GGUF generation. A packaging-verifier formatting bug was found by reading the logs despite a green pipeline; verification now reads the binary manifest and shell pipelines fail closed. The final strict run is the delivery gate; its exact results are linked from the release/PR record.
+Nawa 0.2.0 has been built and signed for personal installation. Automated validation and actual-APK inspection passed on code commit `c60ebc5677ad560d081d1be7189f15700591aa65`. The final documentation commit records those results without changing executable code. Physical Android-device qualification remains open.
 
 ## Active plan
-plans/0001-bootstrap-local-chat.md
+plans/0001-bootstrap-local-chat.md — keep active until a real target phone passes the acceptance checklist.
 
 ## Implemented
-Atomic serialized storage and recovery guard; versioned JSON backup/merge; periodic streaming checkpoints; native RAII/error containment; incremental UTF-8 byte streaming and UTF-16 input; process-owned serialized engine; abort callbacks; bounded recent-history prompts; model import progress/cancellation/header/storage checks; diagnostics and metrics; state restoration/RTL/IME/delete confirmation/rename/regenerate; arm64-only stable application identity; explicit private signing; verified Gradle Wrapper; unit/native/packaging CI checks.
+Atomic serialized storage and corruption recovery guard; versioned JSON export/merge; periodic streaming checkpoints; native RAII/error containment; incremental UTF-8 byte streaming and UTF-16 input; process-owned serialized engine; cancellation callbacks; bounded recent-history prompts; model import progress/cancellation/header/storage checks; diagnostics and metrics; saved UI state/RTL/IME/delete confirmation/rename/regenerate; arm64-only stable application identity; explicit private signing; verified Gradle Wrapper; unit/native/packaging CI checks.
 
-## Validation evidence and limits
-Initial run: https://github.com/ahmed9461/Nawa/actions/runs/43776587905
-- 11 storage/backup/import JVM tests + 3 engine/Unicode JVM tests passed; no failures or skips.
-- 8 native Unicode assertions under ASan/UBSan passed.
-- A checksum-authenticated tiny GGUF completion model generated visible text; three load/unload cycles, context trimming, cancellation/retry, oversized prompts, and malformed file/template checks passed on Linux host.
-- Android lint had no errors; remaining warnings include deliberately restricted ABIs, dependency version notices and API/style suggestions. No claim of zero warnings.
-- Initial binary APK manifest independently inspected: stable package, minSdk 33, targetSdk 36, no Internet permission, non-debuggable, backups disabled, only arm64 libraries. The final verifier additionally enforces ZIP/ELF 16KB alignment and tests a deliberate failure.
+## Verified results
+Final strict run: https://github.com/ahmed9461/Nawa/actions/runs/43777791988
+- 14 JVM tests passed (11 storage/backup/import and 3 engine/Unicode), zero failures/errors/skips.
+- 8 native UTF-16/UTF-8 checks under ASan/UBSan passed.
+- Real small-GGUF CPU generation, three load/unload cycles, context trimming, cancellation/retry, oversized prompts and malformed file/template checks passed on Linux host.
+- Android release assembly and lint passed; lint reports 22 warnings and zero errors, not a warning-free build.
+- Binary manifest, ARM64-only native libraries, no INTERNET permission, non-debuggable release, disabled OS backup, native ELF/ZIP 16KB alignment and an intentional negative verification test passed.
+- Delivered APK was signed offline with the owner-only stable key. Official apksigner verified its v3 signature; every ZIP entry's content was compared to the verified unsigned build, and alignment was independently rechecked after signing.
+- See docs/VALIDATION_0.2.0.md for immutable source/run/hash evidence.
 
-## Signing
-The stable package coexists with legacy debug-signed installs. CI outputs unsigned releases; no secret has been placed in Git. Owner-only private signing material must be retained for all future stable updates. Automated CI signing secrets are not configured by these source changes.
+## Signing and migration
+Stable ID `com.ahmed9461.nawa.stable` coexists with legacy debug-signed installs. Do not require uninstalling an older package. Its private data are not automatically migrated. CI deliberately outputs unsigned releases; no signing secret is in Git or public artifacts. The private signing backup must be retained by the owner for future updates; encrypted CI signing secrets are not configured automatically.
 
-## Physical-device gate
-No physical Android-device test or on-device JNI/inference run has been performed in this pass. Real-model phone compatibility, sustained memory/thermal behavior and same-key in-place upgrade remain explicit acceptance steps. Host smoke checks are not substitutes.
+## Not yet verified / deferred
+No Android runtime/JNI-on-device or physical-phone test was performed in this pass. Instruction-model compatibility (including the originally planned Gemma models), sustained memory/thermals and same-key in-place upgrade require device acceptance. Host tests do not certify those behaviors.
 
-## Intentionally deferred
-Vision/mmproj, voice, GPU acceleration, network model downloads, full Markdown renderer and broad-device distribution. The repository owner's top-level source license still requires an explicit choice; third-party notices do not license Nawa itself.
+GPU, vision/mmproj, voice, model downloads, full Markdown and wider-device distribution remain deferred. The owner still needs to choose a top-level Nawa source license; bundled third-party notices do not license Nawa itself.
